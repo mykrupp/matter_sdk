@@ -2,7 +2,7 @@ name: Fast Forward CSA
 
 on: 
   schedule:
-    - cron: "59 13 * * *"
+    - cron: "10 18 * * *"
        
 jobs:
   rebase_csa:
