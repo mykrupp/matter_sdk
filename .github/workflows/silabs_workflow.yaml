@@ -1,21 +1,30 @@
-name: Rebase CSA
+name: Fast Forward CSA
 
 on: 
   workflow_dispatch:
        
 jobs:
   rebase_csa:
-    name: Rebase CSA  
+    name: Fast Forward CSA  
     permissions:
       contents: write
 
     runs-on: ubuntu-latest
 
     steps: 
-
+      - name: Checkout repository (Create GitHub App Token)
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.SILABSSW_SVC_DEVOPS_WORKFLOWS_APP_ID }}
+          private-key: ${{ secrets.SILABSSW_SVC_DEVOPS_WORKFLOWS_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+ 
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          token: ${{ steps.app-token.outputs.token }}
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
 
       - name: Add CSA Upstream 
@@ -26,15 +35,11 @@ jobs:
           git config --global user.name ${{ github.actor }}
           git config --global user.email ${{ github.actor }}@users.noreply.github.com
 
-      - name: Fetch and Rebase
+      - name: Checkout main branch and fast forward
         run: |
-          git fetch upstream 
-          git rebase upstream/master 
-        continue-on-error: true
+          git checkout --track origin/main
+          git pull upstream master
 
-      - name: Delete all CSA workflows from rebase and continue the rebase if there was a merge conflict
-        run: |
-          find ./.github -mindepth 1 ! -name workflows  ! -name silabs_workflow.yaml -exec git rm -rf {} \;
-          git -c core.editor=true rebase --continue
-        continue-on-error: true
       - run: git push -f
+
+      
